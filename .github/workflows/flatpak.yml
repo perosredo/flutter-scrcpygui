@@ -1,0 +1,67 @@
+name: Build Flatpak
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  flatpak-build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub/flatpak-github-actions:freedesktop-23.08
+      options: --privileged
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        dnf install -y flatpak flatpak-builder
+        flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    
+    - name: Build Flatpak
+      run: |
+        flatpak-builder --force-clean --sandbox --user \
+          --repo=repo --install-deps-from=flathub \
+          --default-branch=stable \
+          --subject="Build of com.github.pizi0.ScrcpyGUI $(date)" \
+          _build com.github.pizi0.ScrcpyGUI.yml
+    
+    - name: Create bundle
+      run: |
+        flatpak build-bundle repo \
+          scrcpygui.flatpak \
+          com.github.pizi0.ScrcpyGUI \
+          stable
+    
+    - name: Upload Flatpak bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: flatpak-bundle
+        path: scrcpygui.flatpak
+    
+    - name: Create Release
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: flatpak-${{ github.run_number }}
+        release_name: Flatpak Build ${{ github.run_number }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./scrcpygui.flatpak
+        asset_name: scrcpygui-${{ github.run_number }}.flatpak
+        asset_content_type: application/octet-stream
