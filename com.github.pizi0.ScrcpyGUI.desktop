@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=ScrcpyGUI
+Comment=Flutter-based GUI for scrcpy Android screen mirroring
+Exec=scrcpygui
+Icon=com.github.pizi0.ScrcpyGUI
+Terminal=false
+Type=Application
+Categories=Utility;System;RemoteAccess;
+StartupNotify=true
+Keywords=android;screen;mirror;scrcpy;adb;
