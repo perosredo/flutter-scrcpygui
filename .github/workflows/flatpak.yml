@@ -10,9 +10,6 @@ on:
 jobs:
   flatpak-build:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/flathub/flatpak-github-actions:freedesktop-23.08
-      options: --privileged
     
     steps:
     - name: Checkout repository
@@ -20,8 +17,9 @@ jobs:
     
     - name: Install dependencies
       run: |
-        dnf install -y flatpak flatpak-builder
-        flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+        sudo apt-get update
+        sudo apt-get install -y flatpak flatpak-builder
+        sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     
     - name: Build Flatpak
       run: |
