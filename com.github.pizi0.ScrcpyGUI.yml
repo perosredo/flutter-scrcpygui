@@ -1,0 +1,87 @@
+app-id: com.github.pizi0.ScrcpyGUI
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: scrcpygui
+finish-args:
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=home
+  - --share=network
+  - --device=all
+  - --talk-name=org.freedesktop.Flatpak
+  - --system-talk-name=org.freedesktop.UDisks2
+  
+modules:
+  - name: scrcpy
+    buildsystem: meson
+    config-opts:
+      - -Dcompile_server=false
+      - -Dportable=false
+    sources:
+      - type: archive
+        url: https://github.com/Genymobile/scrcpy/archive/v2.4.tar.gz
+        sha256: 93c272b7438605c055e127e7444064ed78fa9ca49f81156777fd9e20e419b2ec
+    modules:
+      - name: ffmpeg
+        buildsystem: autotools
+        config-opts:
+          - --enable-shared
+          - --disable-static
+          - --disable-doc
+          - --disable-programs
+          - --disable-encoders
+          - --disable-muxers
+          - --disable-devices
+        sources:
+          - type: archive
+            url: https://ffmpeg.org/releases/ffmpeg-6.1.tar.xz
+            sha256: eb7da3de7dd3ce48a9946ab447a7346bd11a3a85e6efb8f2c2ce637e7f547611
+      
+      - name: libusb
+        buildsystem: autotools
+        sources:
+          - type: archive
+            url: https://github.com/libusb/libusb/releases/download/v1.0.27/libusb-1.0.27.tar.bz2
+            sha256: ffaa41d741a8a3bee244ac8e54a72ea05bf2879663c098c82fc5757853441575
+
+  - name: flutter-sdk
+    buildsystem: simple
+    sources:
+      - type: archive
+        url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.0-stable.tar.xz
+        sha256: dd5c930302a0e89e3de6757e8efe5c35d4bbae63614a7055212b5bc313d9a85e
+        dest: flutter
+    build-commands:
+      - mkdir -p /app/opt
+      - cp -r flutter /app/opt/
+      - ln -s /app/opt/flutter/bin/flutter /app/bin/flutter
+      - ln -s /app/opt/flutter/bin/dart /app/bin/dart
+
+  - name: scrcpygui
+    buildsystem: simple
+    sources:
+      - type: git
+        url: https://github.com/perosredo/flutter-scrcpygui.git
+        branch: main
+    build-commands:
+      - export PATH="/app/opt/flutter/bin:$PATH"
+      - flutter config --no-analytics
+      - flutter pub get
+      - flutter build linux --release
+      - mkdir -p /app/bin
+      - cp -r build/linux/x64/release/bundle/* /app/
+      - mv /app/scrcpygui /app/bin/
+      
+  - name: desktop-integration
+    buildsystem: simple
+    sources:
+      - type: file
+        path: com.github.pizi0.ScrcpyGUI.desktop
+      - type: file
+        path: com.github.pizi0.ScrcpyGUI.png
+    build-commands:
+      - install -Dm644 com.github.pizi0.ScrcpyGUI.desktop /app/share/applications/com.github.pizi0.ScrcpyGUI.desktop
+      - install -Dm644 com.github.pizi0.ScrcpyGUI.png /app/share/icons/hicolor/256x256/apps/com.github.pizi0.ScrcpyGUI.png
