@@ -38,7 +38,7 @@ modules:
         sources:
           - type: archive
             url: https://ffmpeg.org/releases/ffmpeg-6.1.tar.xz
-            sha256: eb7da3de7dd3ce48a9946ab447a7346bd11a3a85e6efb8f2c2ce637e7f547611
+            sha256: 488c76e57dd9b3bee901f71d5c95eaf1db4a5a31fe46a28654e837144207c270
       
       - name: libusb
         buildsystem: autotools
